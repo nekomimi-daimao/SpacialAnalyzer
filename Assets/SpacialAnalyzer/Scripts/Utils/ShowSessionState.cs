@@ -1,7 +1,8 @@
-using System;
+using System.Text;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.XR.ARCore;
 using UnityEngine.XR.ARFoundation;
 
 namespace SpacialAnalyzer.Scripts.Utils
@@ -22,7 +23,14 @@ namespace SpacialAnalyzer.Scripts.Utils
             {
                 return;
             }
-            session.gameObject.AddComponent<ShowSessionState>();
+            var showSessionState = session.gameObject.AddComponent<ShowSessionState>();
+            if (!(session.subsystem is ARCoreSessionSubsystem subsystem))
+            {
+                return;
+            }
+
+            showSessionState._sessionSubsystem = subsystem;
+
             style = new GUIStyle();
             style.fontSize = 40;
             style.normal.textColor = Color.green;
@@ -34,7 +42,21 @@ namespace SpacialAnalyzer.Scripts.Utils
 
         private void OnGUI()
         {
-            GUI.Label(Rect, ARSession.state.ToString(), style);
+            GUI.Label(Rect, ToLog(), style);
+        }
+
+        private readonly StringBuilder _stringBuilder = new StringBuilder();
+        private ARCoreSessionSubsystem _sessionSubsystem;
+
+        private string ToLog()
+        {
+            _stringBuilder.Clear();
+
+            _stringBuilder.AppendLine(ARSession.state.ToString());
+            _stringBuilder.AppendLine(_sessionSubsystem.recordingStatus.ToString());
+            _stringBuilder.AppendLine(_sessionSubsystem.playbackStatus.ToString());
+
+            return _stringBuilder.ToString();
         }
     }
 }
