@@ -86,10 +86,13 @@ namespace Nekomimi.Daimao
                 .FirstOrDefault(s => s.StartsWith("192.168"));
         }
 
-        private readonly Dictionary<string, Func<NameValueCollection, UniTask<string>>> _functions =
+        private readonly Dictionary<string, Func<NameValueCollection, UniTask<string>>> _functionsString =
             new Dictionary<string, Func<NameValueCollection, UniTask<string>>>();
 
-        public string[] Registered => _functions.Keys.ToArray();
+        private readonly Dictionary<string, Func<NameValueCollection, Stream, UniTask<HttpStatusCode>>> _functionsFile =
+            new Dictionary<string, Func<NameValueCollection, Stream, UniTask<HttpStatusCode>>>();
+
+        public string[] Registered => _functionsString.Keys.Concat(_functionsFile.Keys).ToArray();
 
         /// <summary>
         /// Register function.
@@ -109,7 +112,12 @@ namespace Nekomimi.Daimao
         /// 
         public void RegisterRPC(string method, Func<NameValueCollection, UniTask<string>> func)
         {
-            _functions[method.ToLower()] = func;
+            _functionsString[method.ToLower()] = func;
+        }
+
+        public void RegisterRPC(string method, Func<NameValueCollection, Stream, UniTask<HttpStatusCode>> func)
+        {
+            _functionsFile[method.ToLower()] = func;
         }
 
         /// <summary>
@@ -118,7 +126,8 @@ namespace Nekomimi.Daimao
         /// <param name="method"></param>
         public void UnregisterRPC(string method)
         {
-            _functions.Remove(method);
+            _functionsString.Remove(method);
+            _functionsFile.Remove(method);
         }
 
         private async UniTaskVoid ListeningLoop(HttpListener listener, CancellationToken token)
@@ -135,12 +144,10 @@ namespace Nekomimi.Daimao
                 }
 
                 HttpListenerResponse response = null;
-                var statusCode = HttpStatusCode.InternalServerError;
 
                 try
                 {
-                    string message;
-
+                    await UniTask.SwitchToThreadPool();
                     var context = await listener.GetContextAsync();
                     var request = context.Request;
                     response = context.Response;
@@ -148,48 +155,101 @@ namespace Nekomimi.Daimao
 
                     var method = request.RawUrl?.Split('?')[0].Remove(0, 1).ToLower();
 
-                    if (!string.IsNullOrEmpty(method) && _functions.TryGetValue(method, out var func))
+                    if (method == null)
                     {
-                        try
-                        {
-                            NameValueCollection nv = null;
-                            if (string.Equals(request.HttpMethod, HttpMethod.Get.Method))
-                            {
-                                nv = request.QueryString;
-                            }
-                            else if (string.Equals(request.HttpMethod, HttpMethod.Post.Method))
-                            {
-                                string content;
-                                using (var reader = new StreamReader(request.InputStream))
-                                {
-                                    content = await reader.ReadToEndAsync();
-                                }
-                                nv = new NameValueCollection {[PostKey] = content};
-                            }
+                        response.StatusCode = (int)HttpStatusCode.NotImplemented;
+                        continue;
+                    }
 
-                            message = await func(nv);
-                            statusCode = HttpStatusCode.OK;
-                        }
-                        catch (Exception e)
+                    NameValueCollection nv = null;
+                    if (string.Equals(request.HttpMethod, HttpMethod.Get.Method))
+                    {
+                        nv = request.QueryString;
+                    }
+                    else if (string.Equals(request.HttpMethod, HttpMethod.Post.Method))
+                    {
+                        string content;
+                        using (var reader = new StreamReader(request.InputStream))
                         {
-                            message = e.Message;
+                            content = await reader.ReadToEndAsync();
                         }
+                        nv = new NameValueCollection { [PostKey] = content };
+                    }
+
+                    if (_functionsString.TryGetValue(method, out var funcString))
+                    {
+                        await ParseString(nv, response, funcString);
+                    }
+                    else if (_functionsFile.TryGetValue(method, out var funcFile))
+                    {
+                        await ParseFile(nv, response, funcFile);
                     }
                     else
                     {
-                        message = $"non-registered : {method}";
-                    }
-
-                    response.StatusCode = (int) statusCode;
-                    using (var streamWriter = new StreamWriter(response.OutputStream))
-                    {
-                        await streamWriter.WriteAsync(message);
+                        response.StatusCode = (int)HttpStatusCode.NotImplemented;
+                        response.Close();
                     }
                 }
                 finally
                 {
                     response?.Close();
                 }
+            }
+        }
+
+        private static async UniTask ParseString(
+            NameValueCollection args,
+            HttpListenerResponse response,
+            Func<NameValueCollection, UniTask<string>> func)
+        {
+            try
+            {
+                var statusCode = HttpStatusCode.InternalServerError;
+                string message;
+
+                try
+                {
+                    message = await func(args);
+                    statusCode = HttpStatusCode.OK;
+                }
+                catch (Exception e)
+                {
+                    message = e.Message;
+                }
+
+                response.StatusCode = (int)statusCode;
+                using (var streamWriter = new StreamWriter(response.OutputStream))
+                {
+                    await streamWriter.WriteAsync(message);
+                }
+            }
+            finally
+            {
+                response?.Close();
+            }
+        }
+
+        private static async UniTask ParseFile(
+            NameValueCollection args,
+            HttpListenerResponse response,
+            Func<NameValueCollection, Stream, UniTask<HttpStatusCode>> func)
+        {
+            try
+            {
+                var statusCode = HttpStatusCode.InternalServerError;
+                try
+                {
+                    statusCode = await func(args, response.OutputStream);
+                }
+                catch (Exception e)
+                {
+                    // NOP
+                }
+                response.StatusCode = (int)statusCode;
+            }
+            finally
+            {
+                response?.Close();
             }
         }
     }

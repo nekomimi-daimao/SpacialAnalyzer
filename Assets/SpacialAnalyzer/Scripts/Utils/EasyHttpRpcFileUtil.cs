@@ -1,5 +1,6 @@
 using System.Collections.Specialized;
 using System.IO;
+using System.Net;
 using System.Text;
 using Cysharp.Threading.Tasks;
 using Nekomimi.Daimao;
@@ -16,6 +17,7 @@ namespace SpacialAnalyzer.Scripts.Utils
             TemporaryCachePath = Application.temporaryCachePath;
 
             EasyHttpRpcHolder.EasyHttpRPC.RegisterRPC(nameof(ListFile), ListFile);
+            EasyHttpRpcHolder.EasyHttpRPC.RegisterRPC(nameof(ServeFile), ServeFile);
         }
 
         private static string PersistentDataPath;
@@ -60,6 +62,30 @@ namespace SpacialAnalyzer.Scripts.Utils
             }
 
             return UniTask.FromResult(builder.ToString());
+        }
+
+
+        private const string ArgPath = "path";
+
+        private static async UniTask<HttpStatusCode> ServeFile(NameValueCollection arg, Stream output)
+        {
+            var pathType = arg[ArgPathType] ?? string.Empty;
+            var fileName = arg[ArgPath] ?? string.Empty;
+
+            var parentPath = pathType.StartsWith("t") ? TemporaryCachePath : PersistentDataPath;
+            var path = Path.Combine(parentPath, fileName);
+            var fileInfo = new FileInfo(path);
+
+            if (!fileInfo.Exists)
+            {
+                return HttpStatusCode.NotFound;
+            }
+
+            using (var fileStream = new FileStream(path, FileMode.Open))
+            {
+                await fileStream.CopyToAsync(output);
+            }
+            return HttpStatusCode.OK;
         }
     }
 }
