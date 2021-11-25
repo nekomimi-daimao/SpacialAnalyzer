@@ -67,25 +67,35 @@ namespace SpacialAnalyzer.Scripts.Utils
 
         private const string ArgPath = "path";
 
-        private static async UniTask<HttpStatusCode> ServeFile(NameValueCollection arg, Stream output)
+        private static async UniTask ServeFile(NameValueCollection arg, HttpListenerResponse response)
         {
-            var pathType = arg[ArgPathType] ?? string.Empty;
-            var fileName = arg[ArgPath] ?? string.Empty;
-
-            var parentPath = pathType.StartsWith("t") ? TemporaryCachePath : PersistentDataPath;
-            var path = Path.Combine(parentPath, fileName);
-            var fileInfo = new FileInfo(path);
-
-            if (!fileInfo.Exists)
+            try
             {
-                return HttpStatusCode.NotFound;
-            }
+                var pathType = arg[ArgPathType] ?? string.Empty;
+                var fileName = arg[ArgPath] ?? string.Empty;
 
-            using (var fileStream = new FileStream(path, FileMode.Open))
-            {
-                await fileStream.CopyToAsync(output);
+                var parentPath = pathType.StartsWith("t") ? TemporaryCachePath : PersistentDataPath;
+                var path = Path.Combine(parentPath, fileName);
+                var fileInfo = new FileInfo(path);
+
+                if (!fileInfo.Exists)
+                {
+                    response.StatusCode = (int)HttpStatusCode.NotFound;
+                    return;
+                }
+
+                using (var fileStream = new FileStream(path, FileMode.Open))
+                {
+                    response.ContentLength64 = fileStream.Length;
+                    await fileStream.CopyToAsync(response.OutputStream);
+                    response.OutputStream.Close();
+                    response.StatusCode = (int)HttpStatusCode.OK;
+                }
             }
-            return HttpStatusCode.OK;
+            finally
+            {
+                response?.Close();
+            }
         }
     }
 }

@@ -43,7 +43,6 @@ namespace Nekomimi.Daimao
         private HttpListener _httpListener;
         public bool IsListening => _httpListener != null && _httpListener.IsListening;
 
-
         /// <summary>
         /// base url. if closed, "Closed"
         /// </summary>
@@ -89,8 +88,8 @@ namespace Nekomimi.Daimao
         private readonly Dictionary<string, Func<NameValueCollection, UniTask<string>>> _functionsString =
             new Dictionary<string, Func<NameValueCollection, UniTask<string>>>();
 
-        private readonly Dictionary<string, Func<NameValueCollection, Stream, UniTask<HttpStatusCode>>> _functionsFile =
-            new Dictionary<string, Func<NameValueCollection, Stream, UniTask<HttpStatusCode>>>();
+        private readonly Dictionary<string, Func<NameValueCollection, HttpListenerResponse, UniTask>> _functionsFile =
+            new Dictionary<string, Func<NameValueCollection, HttpListenerResponse, UniTask>>();
 
         public string[] Registered => _functionsString.Keys.Concat(_functionsFile.Keys).ToArray();
 
@@ -115,7 +114,7 @@ namespace Nekomimi.Daimao
             _functionsString[method.ToLower()] = func;
         }
 
-        public void RegisterRPC(string method, Func<NameValueCollection, Stream, UniTask<HttpStatusCode>> func)
+        public void RegisterRPC(string method, Func<NameValueCollection, HttpListenerResponse, UniTask> func)
         {
             _functionsFile[method.ToLower()] = func;
         }
@@ -143,14 +142,12 @@ namespace Nekomimi.Daimao
                     break;
                 }
 
-                HttpListenerResponse response = null;
-
                 try
                 {
                     await UniTask.SwitchToThreadPool();
                     var context = await listener.GetContextAsync();
                     var request = context.Request;
-                    response = context.Response;
+                    var response = context.Response;
                     response.ContentEncoding = Encoding.UTF8;
 
                     var method = request.RawUrl?.Split('?')[0].Remove(0, 1).ToLower();
@@ -158,31 +155,17 @@ namespace Nekomimi.Daimao
                     if (method == null)
                     {
                         response.StatusCode = (int)HttpStatusCode.NotImplemented;
+                        response.Close();
                         continue;
-                    }
-
-                    NameValueCollection nv = null;
-                    if (string.Equals(request.HttpMethod, HttpMethod.Get.Method))
-                    {
-                        nv = request.QueryString;
-                    }
-                    else if (string.Equals(request.HttpMethod, HttpMethod.Post.Method))
-                    {
-                        string content;
-                        using (var reader = new StreamReader(request.InputStream))
-                        {
-                            content = await reader.ReadToEndAsync();
-                        }
-                        nv = new NameValueCollection { [PostKey] = content };
                     }
 
                     if (_functionsString.TryGetValue(method, out var funcString))
                     {
-                        await ParseString(nv, response, funcString);
+                        ResponseString(request, response, funcString).Forget();
                     }
                     else if (_functionsFile.TryGetValue(method, out var funcFile))
                     {
-                        await ParseFile(nv, response, funcFile);
+                        ResponseFile(request, response, funcFile).Forget();
                     }
                     else
                     {
@@ -190,20 +173,40 @@ namespace Nekomimi.Daimao
                         response.Close();
                     }
                 }
-                finally
+                catch (Exception e)
                 {
-                    response?.Close();
+                    // NOP
                 }
             }
         }
 
-        private static async UniTask ParseString(
-            NameValueCollection args,
-            HttpListenerResponse response,
+        private static async UniTask<NameValueCollection> ParseArg(HttpListenerRequest request)
+        {
+            NameValueCollection nv = null;
+            if (string.Equals(request.HttpMethod, HttpMethod.Get.Method))
+            {
+                nv = request.QueryString;
+            }
+            else if (string.Equals(request.HttpMethod, HttpMethod.Post.Method))
+            {
+                string content;
+                using (var reader = new StreamReader(request.InputStream))
+                {
+                    content = await reader.ReadToEndAsync();
+                }
+                nv = new NameValueCollection { [PostKey] = content };
+            }
+            return nv;
+        }
+
+        private static async UniTaskVoid ResponseString(
+            HttpListenerRequest request, HttpListenerResponse response,
             Func<NameValueCollection, UniTask<string>> func)
         {
             try
             {
+                var args = await ParseArg(request);
+
                 var statusCode = HttpStatusCode.InternalServerError;
                 string message;
 
@@ -229,27 +232,23 @@ namespace Nekomimi.Daimao
             }
         }
 
-        private static async UniTask ParseFile(
-            NameValueCollection args,
-            HttpListenerResponse response,
-            Func<NameValueCollection, Stream, UniTask<HttpStatusCode>> func)
+
+        private static async UniTaskVoid ResponseFile(
+            HttpListenerRequest request, HttpListenerResponse response,
+            Func<NameValueCollection, HttpListenerResponse, UniTask> func)
         {
             try
             {
-                var statusCode = HttpStatusCode.InternalServerError;
-                try
-                {
-                    statusCode = await func(args, response.OutputStream);
-                }
-                catch (Exception e)
-                {
-                    // NOP
-                }
-                response.StatusCode = (int)statusCode;
+                var args = await ParseArg(request);
+                await func(args, response);
+            }
+            catch (Exception e)
+            {
+                response.StatusCode = (int)HttpStatusCode.InternalServerError;
             }
             finally
             {
-                response?.Close();
+                response.Close();
             }
         }
     }
