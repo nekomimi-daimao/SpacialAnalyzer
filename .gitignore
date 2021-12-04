@@ -58,3 +58,13 @@ sysinfo.txt
 # Crashlytics generated file
 crashlytics-build.properties
 
+# ARFoundationRemote
+ARFoundationRemoteInstaller
+Assets/Plugins/ARFoundationRemoteInstaller.meta
+Assets/XR/Loaders/AR Foundation Remote Loader.asset
+Assets/XR/Loaders/AR Foundation Remote Loader.asset.meta
+Assets/XR/Settings/AR Foundation Remote Loader Settings.asset
+Assets/XR/Settings/AR Foundation Remote Loader Settings.asset.meta
+Assets/XR/Settings/AR Foundation Remote Session Records Data.asset
+Assets/XR/Settings/AR Foundation Remote Session Records Data.asset.meta
+Packages/com.unity.xr.arfoundation@4.2.1
