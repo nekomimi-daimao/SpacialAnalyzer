@@ -35,6 +35,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using SpacialAnalyzer.Scripts.Utils;
 
 namespace Nekomimi.Daimao
 {
@@ -85,6 +86,8 @@ namespace Nekomimi.Daimao
                 .FirstOrDefault(s => s.StartsWith("192.168"));
         }
 
+        #region Register
+
         private readonly Dictionary<string, Func<NameValueCollection, UniTask<string>>> _functionsString =
             new Dictionary<string, Func<NameValueCollection, UniTask<string>>>();
 
@@ -129,6 +132,8 @@ namespace Nekomimi.Daimao
             _functionsFile.Remove(method);
         }
 
+        #endregion
+
         private async UniTaskVoid ListeningLoop(HttpListener listener, CancellationToken token)
         {
             token.Register(() => { listener?.Close(); });
@@ -150,22 +155,13 @@ namespace Nekomimi.Daimao
                     var response = context.Response;
                     response.ContentEncoding = Encoding.UTF8;
 
-                    var method = request.RawUrl?.Split('?')[0].Remove(0, 1).ToLower();
-
-                    if (method == null)
+                    if (string.Equals(request.HttpMethod, HttpMethod.Get.Method))
                     {
-                        response.StatusCode = (int)HttpStatusCode.NotImplemented;
-                        response.Close();
-                        continue;
+                        ProcessGet(request, response).Forget();
                     }
-
-                    if (_functionsString.TryGetValue(method, out var funcString))
+                    else if (string.Equals(request.HttpMethod, HttpMethod.Post.Method))
                     {
-                        ResponseString(request, response, funcString).Forget();
-                    }
-                    else if (_functionsFile.TryGetValue(method, out var funcFile))
-                    {
-                        ResponseFile(request, response, funcFile).Forget();
+                        ProcessPost(request, response).Forget();
                     }
                     else
                     {
@@ -180,7 +176,7 @@ namespace Nekomimi.Daimao
             }
         }
 
-        private static async UniTask<NameValueCollection> ParseArg(HttpListenerRequest request)
+        public static NameValueCollection ParseArg(HttpListenerRequest request)
         {
             NameValueCollection nv = null;
             if (string.Equals(request.HttpMethod, HttpMethod.Get.Method))
@@ -189,14 +185,33 @@ namespace Nekomimi.Daimao
             }
             else if (string.Equals(request.HttpMethod, HttpMethod.Post.Method))
             {
-                string content;
-                using (var reader = new StreamReader(request.InputStream))
-                {
-                    content = await reader.ReadToEndAsync();
-                }
-                nv = new NameValueCollection { [PostKey] = content };
+                nv = request.Headers;
             }
             return nv;
+        }
+
+        #region GET
+
+        private UniTask ProcessGet(HttpListenerRequest request, HttpListenerResponse response)
+        {
+            var method = request.RawUrl?.Split('?')[0].Remove(0, 1).ToLower()
+                         ?? string.Empty;
+
+            if (_functionsString.TryGetValue(method, out var funcString))
+            {
+                ResponseString(request, response, funcString).Forget();
+            }
+            else if (_functionsFile.TryGetValue(method, out var funcFile))
+            {
+                ResponseFile(request, response, funcFile).Forget();
+            }
+            else
+            {
+                response.StatusCode = (int)HttpStatusCode.NotImplemented;
+                response.Close();
+            }
+
+            return UniTask.CompletedTask;
         }
 
         private static async UniTaskVoid ResponseString(
@@ -205,7 +220,7 @@ namespace Nekomimi.Daimao
         {
             try
             {
-                var args = await ParseArg(request);
+                var args = ParseArg(request);
 
                 var statusCode = HttpStatusCode.InternalServerError;
                 string message;
@@ -239,7 +254,7 @@ namespace Nekomimi.Daimao
         {
             try
             {
-                var args = await ParseArg(request);
+                var args = ParseArg(request);
                 await func(args, response);
             }
             catch (Exception e)
@@ -251,5 +266,23 @@ namespace Nekomimi.Daimao
                 response.Close();
             }
         }
+
+        #endregion
+
+        #region POST
+
+        private async UniTask ProcessPost(HttpListenerRequest request, HttpListenerResponse response)
+        {
+            try
+            {
+                await EasyHttpRpcFileUtil.SaveFile(request, response);
+            }
+            finally
+            {
+                response.Close();
+            }
+        }
+
+        #endregion
     }
 }

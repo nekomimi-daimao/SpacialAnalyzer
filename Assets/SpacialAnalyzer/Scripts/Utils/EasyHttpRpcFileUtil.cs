@@ -97,5 +97,39 @@ namespace SpacialAnalyzer.Scripts.Utils
                 response?.Close();
             }
         }
+
+        public static async UniTask SaveFile(HttpListenerRequest request, HttpListenerResponse response)
+        {
+            var status = HttpStatusCode.InternalServerError;
+            try
+            {
+                var arg = EasyHttpRPC.ParseArg(request);
+                var pathType = arg[ArgPathType] ?? string.Empty;
+                var fileName = arg[ArgPath] ?? string.Empty;
+
+                var parentPath = pathType.StartsWith("t") ? TemporaryCachePath : PersistentDataPath;
+                var path = Path.Combine(parentPath, fileName);
+                var fileInfo = new FileInfo(path);
+
+                if (fileInfo.Directory is { Exists: false })
+                {
+                    fileInfo.Directory.Create();
+                }
+                using (var fileStream = new FileStream(path, FileMode.OpenOrCreate))
+                {
+                    await request.InputStream.CopyToAsync(fileStream);
+                }
+
+                if (fileInfo.Exists)
+                {
+                    status = HttpStatusCode.OK;
+                }
+            }
+            finally
+            {
+                response.StatusCode = (int)status;
+                response.Close();
+            }
+        }
     }
 }
