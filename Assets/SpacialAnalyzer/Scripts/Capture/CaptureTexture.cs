@@ -30,7 +30,7 @@ namespace SpacialAnalyzer.Scripts.Capture
                     inputRect = new RectInt(0, 0, xrCpuImage.width, xrCpuImage.height),
                     outputDimensions = new Vector2Int(xrCpuImage.width, xrCpuImage.height),
                     outputFormat = TextureFormat.RGBA32,
-                    transformation = XRCpuImage.Transformation.None
+                    transformation = XRCpuImage.Transformation.MirrorX,
                 };
                 Texture2D texture = null;
                 using (var asyncConversion = xrCpuImage.ConvertAsync(conversionParams))
@@ -42,6 +42,7 @@ namespace SpacialAnalyzer.Scripts.Capture
                     }
                     texture = new Texture2D(xrCpuImage.width, xrCpuImage.height, TextureFormat.RGBA32, false);
                     texture.LoadRawTextureData(asyncConversion.GetData<byte>());
+                    texture.Apply();
                 }
                 return texture;
             }
