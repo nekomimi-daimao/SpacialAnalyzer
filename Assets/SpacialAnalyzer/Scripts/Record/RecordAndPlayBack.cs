@@ -7,7 +7,7 @@ using UnityEngine.XR.ARFoundation;
 
 namespace SpacialAnalyzer.Scripts.Record
 {
-    public sealed class RecordAndPlayBack : MonoBehaviour
+    public sealed class RecordAndPlayBack
     {
         #region Components
 
@@ -18,7 +18,7 @@ namespace SpacialAnalyzer.Scripts.Record
         {
             if (_arSession == null)
             {
-                _arSession = FindObjectOfType<ARSession>();
+                _arSession = UnityEngine.Object.FindObjectOfType<ARSession>();
             }
             if (_arSession == null)
             {
@@ -131,7 +131,7 @@ namespace SpacialAnalyzer.Scripts.Record
             {
                 return ArStatus.ErrorIllegalState;
             }
-            
+
             return _subsystemArCore.StopPlayback();
         }
 
