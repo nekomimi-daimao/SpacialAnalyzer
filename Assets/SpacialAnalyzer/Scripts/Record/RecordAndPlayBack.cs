@@ -34,6 +34,8 @@ namespace SpacialAnalyzer.Scripts.Record
 
         #region Record
 
+        public ArRecordingStatus RecordingStatus => _subsystemArCore?.recordingStatus ?? ArRecordingStatus.None;
+
         private const string DateTimeFormat = "yyyyMMddHHmmss";
 
         public async UniTask<ArStatus> StartRecord()
@@ -94,6 +96,8 @@ namespace SpacialAnalyzer.Scripts.Record
         #endregion
 
         #region PlayBack
+
+        public ArPlaybackStatus PlaybackStatus => _subsystemArCore?.playbackStatus ?? ArPlaybackStatus.None;
 
         public async UniTask<ArStatus> StartPlayback(string path)
         {
