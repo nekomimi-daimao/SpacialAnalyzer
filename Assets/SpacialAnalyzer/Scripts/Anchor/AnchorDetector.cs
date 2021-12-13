@@ -1,33 +1,46 @@
+using System;
 using System.Collections.Generic;
 using SpacialAnalyzer.Scripts.Utils;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
+using VContainer;
 
 namespace SpacialAnalyzer.Scripts.Anchor
 {
-    public sealed class AnchorDetector
+    public sealed class AnchorDetector : IDisposable
     {
         private const TrackableType TrackableTypes =
             TrackableType.FeaturePoint |
             TrackableType.PlaneWithinPolygon;
 
-        private ARAnchorManager _anchorManager;
-        private ARRaycastManager _raycastManager;
-        private ARPointCloudManager _pointCloudManager;
-        private ARPlaneManager _planeManager;
+        private readonly ARAnchorManager _anchorManager;
+
+        private readonly ARRaycastManager _raycastManager;
+
+        private readonly ARPointCloudManager _pointCloudManager;
+
+        private readonly ARPlaneManager _planeManager;
+
         private readonly List<ARRaycastHit> _arRaycastHits = new List<ARRaycastHit>();
 
-        public AnchorWithMemo _prefabAnchorWithMemo = null;
+        private readonly AnchorWithMemo _prefabAnchorWithMemo;
 
         public readonly List<ARAnchor> Anchors = new List<ARAnchor>();
 
-        public void Init()
+        [Inject]
+        public AnchorDetector(
+            ARAnchorManager anchorManager,
+            ARRaycastManager raycastManager,
+            ARPointCloudManager pointCloudManager,
+            ARPlaneManager planeManager,
+            AnchorWithMemo prefabAnchorWithMemo)
         {
-            _anchorManager = ArComponentsSupplier.GetComponent<ARAnchorManager>();
-            _raycastManager = ArComponentsSupplier.GetComponent<ARRaycastManager>();
-            _pointCloudManager = ArComponentsSupplier.GetComponent<ARPointCloudManager>();
-            _planeManager = ArComponentsSupplier.GetComponent<ARPlaneManager>();
+            _anchorManager = anchorManager;
+            _raycastManager = raycastManager;
+            _pointCloudManager = pointCloudManager;
+            _planeManager = planeManager;
+            _prefabAnchorWithMemo = prefabAnchorWithMemo;
 
             _anchorManager.anchorsChanged += OnAnchorsChanged;
         }
@@ -66,6 +79,11 @@ namespace SpacialAnalyzer.Scripts.Anchor
         {
             Anchors.AddRange(arg.added);
             Anchors.RemoveAll(anchor => arg.removed.Contains(anchor));
+        }
+
+        public void Dispose()
+        {
+            _anchorManager.anchorsChanged += OnAnchorsChanged;
         }
     }
 }

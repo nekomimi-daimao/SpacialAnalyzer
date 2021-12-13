@@ -3,12 +3,13 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
+using VContainer;
 
 namespace SpacialAnalyzer.Scripts.Capture
 {
-    public sealed class CaptureTexture : MonoBehaviour
+    public sealed class CaptureTexture
     {
-        [SerializeField]
+        [Inject]
         private ARCameraManager _cameraManager;
 
         public async UniTask<Texture2D> CaptureAsync()
