@@ -17,6 +17,7 @@ namespace SpacialAnalyzer.Scripts.DI
             builder.RegisterComponentInHierarchy<ARCameraManager>();
             builder.RegisterComponentInHierarchy<AnchorWithMemo>();
             builder.RegisterComponentInHierarchy<UICanvas>();
+            builder.RegisterComponentInHierarchy<EntryPoint>();
 
             var origin = FindObjectOfType<ARSessionOrigin>();
             builder.RegisterComponent(origin);
@@ -29,8 +30,7 @@ namespace SpacialAnalyzer.Scripts.DI
 
             builder.Register<AnchorDetector>(Lifetime.Scoped);
             builder.Register<CaptureTexture>(Lifetime.Scoped);
-
-            builder.RegisterEntryPoint<AnalyzeSpatial>();
+            builder.Register<AnalyzeSpatial>(Lifetime.Scoped);
         }
     }
 }

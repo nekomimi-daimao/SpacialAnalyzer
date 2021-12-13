@@ -9,8 +9,13 @@ namespace SpacialAnalyzer.Scripts.Capture
 {
     public sealed class CaptureTexture
     {
+        private readonly ARCameraManager _cameraManager;
+
         [Inject]
-        private ARCameraManager _cameraManager;
+        public CaptureTexture(ARCameraManager cameraManager)
+        {
+            _cameraManager = cameraManager;
+        }
 
         public async UniTask<Texture2D> CaptureAsync()
         {

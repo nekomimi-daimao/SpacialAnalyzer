@@ -83,7 +83,7 @@ namespace SpacialAnalyzer.Scripts.Anchor
 
         public void Dispose()
         {
-            _anchorManager.anchorsChanged += OnAnchorsChanged;
+            _anchorManager.anchorsChanged -= OnAnchorsChanged;
         }
     }
 }

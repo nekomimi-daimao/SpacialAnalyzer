@@ -10,12 +10,11 @@ using SpacialAnalyzer.Scripts.Vision.Json;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using VContainer;
-using VContainer.Unity;
 
 namespace SpacialAnalyzer.Scripts.Analyzer
 {
     // ReSharper disable once ClassNeverInstantiated.Global
-    public sealed class AnalyzeSpatial : IPostStartable
+    public sealed class AnalyzeSpatial
     {
         private readonly AnchorDetector _anchorDetector;
         private readonly CaptureTexture _captureTexture;
@@ -36,23 +35,22 @@ namespace SpacialAnalyzer.Scripts.Analyzer
             _uiCanvas = uiCanvas;
         }
 
-        public void PostStart()
+        public void Init()
         {
             _uiCanvas.ButtonScan
                 .OnClickAsAsyncEnumerable()
                 .ForEachAwaitWithCancellationAsync(OnClickAnalyze, _uiCanvas.GetCancellationTokenOnDestroy());
         }
 
-        private UniTask OnClickAnalyze(AsyncUnit _, CancellationToken token)
+        private async UniTask OnClickAnalyze(AsyncUnit _, CancellationToken token)
         {
             try
             {
-                return Analyze(token);
+                await Analyze(token);
             }
             catch (Exception e)
             {
                 Debug.LogException(e);
-                return UniTask.CompletedTask;
             }
         }
 
