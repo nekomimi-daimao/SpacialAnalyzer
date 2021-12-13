@@ -1,5 +1,7 @@
+using SpacialAnalyzer.Scripts.Analyzer;
 using SpacialAnalyzer.Scripts.Anchor;
 using SpacialAnalyzer.Scripts.Capture;
+using SpacialAnalyzer.Scripts.UI;
 using SpacialAnalyzer.Scripts.Utils;
 using UnityEngine.XR.ARFoundation;
 using VContainer;
@@ -13,6 +15,8 @@ namespace SpacialAnalyzer.Scripts.DI
         {
             builder.RegisterComponentInHierarchy<ARSession>();
             builder.RegisterComponentInHierarchy<ARCameraManager>();
+            builder.RegisterComponentInHierarchy<AnchorWithMemo>();
+            builder.RegisterComponentInHierarchy<UICanvas>();
 
             var origin = FindObjectOfType<ARSessionOrigin>();
             builder.RegisterComponent(origin);
@@ -25,6 +29,8 @@ namespace SpacialAnalyzer.Scripts.DI
 
             builder.Register<AnchorDetector>(Lifetime.Scoped);
             builder.Register<CaptureTexture>(Lifetime.Scoped);
+
+            builder.RegisterEntryPoint<AnalyzeSpatial>();
         }
     }
 }
