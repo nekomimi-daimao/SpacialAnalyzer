@@ -24,8 +24,6 @@ namespace SpacialAnalyzer.Scripts.Anchor
 
         private readonly List<ARRaycastHit> _arRaycastHits = new List<ARRaycastHit>();
 
-        private readonly AnchorWithMemo _prefabAnchorWithMemo;
-
         public readonly List<ARAnchor> Anchors = new List<ARAnchor>();
 
         [Inject]
@@ -33,14 +31,12 @@ namespace SpacialAnalyzer.Scripts.Anchor
             ARAnchorManager anchorManager,
             ARRaycastManager raycastManager,
             ARPointCloudManager pointCloudManager,
-            ARPlaneManager planeManager,
-            AnchorWithMemo prefabAnchorWithMemo)
+            ARPlaneManager planeManager)
         {
             _anchorManager = anchorManager;
             _raycastManager = raycastManager;
             _pointCloudManager = pointCloudManager;
             _planeManager = planeManager;
-            _prefabAnchorWithMemo = prefabAnchorWithMemo;
 
             _anchorManager.anchorsChanged += OnAnchorsChanged;
         }
@@ -63,15 +59,6 @@ namespace SpacialAnalyzer.Scripts.Anchor
             {
                 anchor = _anchorManager.GetAnchor(hit.trackableId);
             }
-            if (anchor == null)
-            {
-                return null;
-            }
-
-            var anchorTs = anchor.transform;
-            var trackableId = anchor.trackableId.subId1.ToString("X16");
-            var memo = _prefabAnchorWithMemo.Create(trackableId, anchorTs.position, anchorTs.rotation, anchorTs);
-
             return anchor;
         }
 

@@ -47,7 +47,11 @@ namespace SpacialAnalyzer.Scripts.Utils
 
         public AnchorWithMemo Create(string memo, Vector3 pos, Quaternion rot, Transform parent = null)
         {
-            var instance = Instantiate(this, pos, rot, parent);
+            var instance = Instantiate(this, pos, rot);
+            if (parent != null)
+            {
+                instance.transform.SetParent(parent);
+            }
             instance.Memo = memo;
             return instance;
         }
