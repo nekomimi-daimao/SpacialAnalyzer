@@ -8,7 +8,7 @@ namespace SpacialAnalyzer.Scripts.Analyzer
         [Inject]
         public void Initialize(AnalyzeSpatial spatial)
         {
-            spatial.Init();
+            // spatial.Init();
         }
     }
 }
