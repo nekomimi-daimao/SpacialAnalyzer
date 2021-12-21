@@ -169,7 +169,9 @@ namespace Nekomimi.Daimao
                         response.Close();
                     }
                 }
+#pragma warning disable CS0168
                 catch (Exception e)
+#pragma warning restore CS0168
                 {
                     // NOP
                 }
@@ -257,7 +259,9 @@ namespace Nekomimi.Daimao
                 var args = ParseArg(request);
                 await func(args, response);
             }
+#pragma warning disable CS0168
             catch (Exception e)
+#pragma warning restore CS0168
             {
                 response.StatusCode = (int)HttpStatusCode.InternalServerError;
             }

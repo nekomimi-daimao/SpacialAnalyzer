@@ -1,0 +1,30 @@
+# https://marketplace.visualstudio.com/items?itemName=humao.rest-client
+
+# enter your address
+@baseurl = http://192.168.00.00:1234/
+
+###
+
+# check registered
+GET {{baseurl}}ping
+
+### 
+
+GET {{baseurl}}listfile
+?pathtype=p
+&dir=record
+
+### 
+
+GET {{baseurl}}servefile
+?pathtype=p
+&path=record/20000000.mp4
+
+### 
+
+# post 
+POST  {{baseurl}}upload
+pathtype: p
+path: picture/cat.png
+
+< /Users/user/desktop/cat.png
