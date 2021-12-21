@@ -56,11 +56,20 @@ namespace SpacialAnalyzer.Scripts.Analyzer
         {
             try
             {
+                _uiCanvas.ButtonScan.interactable = false;
+
                 await Analyze(token);
             }
             catch (Exception e)
             {
                 Debug.LogException(e);
+            }
+            finally
+            {
+                if (_uiCanvas != null && _uiCanvas.ButtonScan != null)
+                {
+                    _uiCanvas.ButtonScan.interactable = true;
+                }
             }
         }
 
