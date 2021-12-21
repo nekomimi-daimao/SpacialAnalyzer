@@ -129,9 +129,9 @@ namespace SpacialAnalyzer.Scripts.Analyzer
                 x /= normalizedVertices.Count;
                 y /= normalizedVertices.Count;
 
-                var ray = _camera.ScreenPointToRay(new Vector3((float)(width * x), (float)(height * y), 0));
-                var rayLocalPos = anchorTs.InverseTransformPoint(ray.origin);
-                var rayLocalDirection = anchorTs.InverseTransformDirection(ray.direction);
+                var ray = _camera.ScreenPointToRay(new Vector3((float)(width * x), (float)(height * (1d - y)), 0f));
+                var rayLocalPos = _cameraTs.InverseTransformPoint(ray.origin);
+                var rayLocalDirection = _cameraTs.InverseTransformDirection(ray.direction);
 
                 var rayPos = _transformHelper.TransformPoint(rayLocalPos);
                 var rayDirection = _transformHelper.TransformDirection(rayLocalDirection);
