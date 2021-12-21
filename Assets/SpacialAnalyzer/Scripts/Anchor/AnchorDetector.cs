@@ -45,8 +45,12 @@ namespace SpacialAnalyzer.Scripts.Anchor
             _arRaycastHits.Clear();
             if (!_raycastManager.Raycast(new Ray(origin, forward), _arRaycastHits, TrackableTypes))
             {
-                return null;
+                var go = new GameObject("no hit").transform;
+                go.position = origin + forward * 2;
+                go.forward = forward;
+                return go.gameObject.AddComponent<ARAnchor>();
             }
+
             var hit = _arRaycastHits[0];
 
             ARAnchor anchor;
