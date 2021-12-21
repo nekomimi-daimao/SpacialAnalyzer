@@ -50,6 +50,8 @@ namespace SpacialAnalyzer.Scripts.Analyzer
             _uiCanvas.ButtonScan
                 .OnClickAsAsyncEnumerable()
                 .ForEachAwaitWithCancellationAsync(OnClickAnalyze, _uiCanvas.GetCancellationTokenOnDestroy());
+
+            _uiCanvas.ButtonScan.interactable = true;
         }
 
         private async UniTask OnClickAnalyze(AsyncUnit _, CancellationToken token)
