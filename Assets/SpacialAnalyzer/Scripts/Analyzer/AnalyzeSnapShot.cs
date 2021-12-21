@@ -33,7 +33,7 @@ namespace SpacialAnalyzer.Scripts.Analyzer
                 screenWidth = screenWidth,
                 screenHeight = screenHeight,
                 trackableIdSerializable = TrackableIdSerializable.Create(anchor.trackableId),
-                diffPos = cameraTs.position - anchorTs.position,
+                diffPos = anchorTs.InverseTransformPoint(cameraTs.position),
                 diffRot = cameraTs.rotation * Quaternion.Inverse(anchorTs.rotation),
             };
         }
