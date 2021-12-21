@@ -10,7 +10,6 @@ namespace SpacialAnalyzer.Scripts.Vision
     public static class RequestSender
     {
         private const string API = "https://vision.googleapis.com/v1/images:annotate?key=";
-        private const string ApiKey = "ENTER_YOUR_KEY";
 
         public static async UniTask<ResponseData> SendRequest(RequestData requestData, CancellationToken token)
         {
@@ -20,7 +19,7 @@ namespace SpacialAnalyzer.Scripts.Vision
                 var uploadHandler = new UploadHandlerRaw(postBuffer);
                 var downloadHandler = new DownloadHandlerBuffer();
 
-                var request = new UnityWebRequest(API + ApiKey, UnityWebRequest.kHttpVerbPOST)
+                var request = new UnityWebRequest(API + VisionConst.ApiKey, UnityWebRequest.kHttpVerbPOST)
                     { uploadHandler = uploadHandler, downloadHandler = downloadHandler, };
                 request.SetRequestHeader("Content-Type", "application/json; charset=utf-8");
 
