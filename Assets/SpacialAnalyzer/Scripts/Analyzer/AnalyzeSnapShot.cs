@@ -1,5 +1,4 @@
 using System;
-using ARFoundationRemote.Runtime;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
@@ -14,8 +13,7 @@ namespace SpacialAnalyzer.Scripts.Analyzer
         public int textureHeight;
         public int screenWidth;
         public int screenHeight;
-        public TrackableIdSerializable trackableIdSerializable;
-        public TrackableId trackableId => trackableIdSerializable.Value;
+        public TrackableId trackableId;
         public Vector3 diffPos;
         public Quaternion diffRot;
 
@@ -32,7 +30,7 @@ namespace SpacialAnalyzer.Scripts.Analyzer
                 textureHeight = texture.height,
                 screenWidth = screenWidth,
                 screenHeight = screenHeight,
-                trackableIdSerializable = TrackableIdSerializable.Create(anchor.trackableId),
+                trackableId = anchor.trackableId,
                 diffPos = anchorTs.InverseTransformPoint(cameraTs.position),
                 diffRot = cameraTs.rotation * Quaternion.Inverse(anchorTs.rotation),
             };
