@@ -62,6 +62,14 @@ namespace SpacialAnalyzer.Scripts.Anchor
             {
                 anchor = _anchorManager.GetAnchor(hit.trackableId);
             }
+
+            if (anchor == null)
+            {
+                var go = new GameObject("no trackable").transform;
+                go.SetPositionAndRotation(hit.pose.position, hit.pose.rotation);
+                anchor = go.gameObject.AddComponent<ARAnchor>();
+            }
+
             return anchor;
         }
 
