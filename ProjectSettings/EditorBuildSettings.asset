@@ -4,7 +4,13 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/SpacialAnalyzer/Scenes/Analyzer.unity
+    guid: 23de4300695d14687ab386438b530491
+  - enabled: 0
+    path: Assets/SpacialAnalyzer/Scenes/Recorder.unity
+    guid: 58eeee3aa7ed844509908c05a00745ea
   m_configObjects:
     UnityEditor.XR.ARCore.ARCoreSettings: {fileID: 11400000, guid: d1d34e21acfe2448d84db051ffa8a6a9, type: 2}
     UnityEditor.XR.ARKit.ARKitSettings: {fileID: 11400000, guid: d3737063af29c471ebf0108c9634b3e1, type: 2}
