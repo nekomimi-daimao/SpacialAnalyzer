@@ -1,3 +1,5 @@
+#if UNITY_ANDROID || UNITY_EDITOR
+
 using System;
 using System.IO;
 using Cysharp.Threading.Tasks;
@@ -142,3 +144,5 @@ namespace SpacialAnalyzer.Scripts.Record
         #endregion
     }
 }
+
+#endif

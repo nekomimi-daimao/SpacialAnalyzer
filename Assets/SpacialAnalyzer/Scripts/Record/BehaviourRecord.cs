@@ -1,3 +1,5 @@
+#if UNITY_ANDROID || UNITY_EDITOR
+
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -49,3 +51,5 @@ namespace SpacialAnalyzer.Scripts.Record
         }
     }
 }
+
+#endif

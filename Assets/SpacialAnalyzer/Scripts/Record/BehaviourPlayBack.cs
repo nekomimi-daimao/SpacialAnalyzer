@@ -1,3 +1,5 @@
+#if UNITY_ANDROID || UNITY_EDITOR
+
 using System;
 using System.IO;
 using System.Threading;
@@ -85,3 +87,5 @@ namespace SpacialAnalyzer.Scripts.Record
         }
     }
 }
+
+#endif
